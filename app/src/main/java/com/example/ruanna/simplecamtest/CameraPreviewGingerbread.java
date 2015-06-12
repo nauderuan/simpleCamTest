@@ -2,6 +2,7 @@ package com.example.ruanna.simplecamtest;
 
 import java.util.List;
 
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Size;
@@ -30,22 +31,40 @@ class CameraPreviewGingerbread implements CameraPreviewProvider {
 	public void startPreview(Camera camera, int previewWidth, int previewHeight, Display display) {
 		int displayRotation = display.getRotation();
 		Camera.Parameters parameters = camera.getParameters();
-		List<Size> supportedPreviewSizes = parameters
-				.getSupportedPreviewSizes();
-		Log.d("CameraPreview", "Rotation :" + displayRotation + ", Sizes: ");
-		for (Size size : supportedPreviewSizes) {
-			Log.d("CameraPreview", "Size: " + size.width + ", " + size.height);
+		List<Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+
+
+//		previewWidth = 720;
+//		previewHeight = 345;
+
+
+
+		Log.d("CameraPreview", "Preview width:" + previewWidth + ", height: " + previewHeight);
+		//We want a 4:3 aspect ratio so will intercept
+		float optimalWidth = previewWidth;
+		float optimalHeight = previewHeight;
+
+		if ((optimalWidth / 3 * 4) > previewHeight) {
+			optimalWidth = (int) Math.ceil((previewHeight / 4 * 3));
+		} else {
+			optimalHeight = (int) Math.ceil((optimalWidth / 3 * 4));
 		}
-		Size optimalPreviewSize = getOptimalPreviewSize(supportedPreviewSizes, previewWidth, previewHeight);
+		Log.d("CameraPreview", "optimalWidth :" + optimalWidth + ", optimalHeight: " + optimalHeight);
+
+
+
+
+		Log.d("CameraPreview", "Rotation :" + displayRotation + ", Sizes: ");
+		Size optimalPreviewSize = getOptimalPreviewSize(supportedPreviewSizes, (int)optimalWidth, (int)optimalHeight);
+
 		if (optimalPreviewSize != null) {
+
+
+			//TODO by the looks of it we can just find the biggest 4:3 aspect ratio and use that
+			//since it will be stretched to fit inside our preview view
 			Log.d("CameraPreview", "Optimal Size:" + optimalPreviewSize.width + ", " + optimalPreviewSize.height);
+
 			int width = optimalPreviewSize.width, height = optimalPreviewSize.height;
-
-
-			Log.d("TEST", "width=" + optimalPreviewSize.width);
-			Log.d("TEST", "height=" + optimalPreviewSize.height);
-
-			MainActivity.setSize(optimalPreviewSize.width, optimalPreviewSize.height);
 
 			boolean doSwitch = false;
 			int degrees = 0;
@@ -68,24 +87,71 @@ class CameraPreviewGingerbread implements CameraPreviewProvider {
 				break;
 			}
 
-			if (doSwitch) {
-				MainActivity.setSize(optimalPreviewSize.height, optimalPreviewSize.width);
-			} else {
-				MainActivity.setSize(optimalPreviewSize.width, optimalPreviewSize.height);
-			}
+//			if (doSwitch) {
+//				Log.d("CameraPreview", "doSwitch : yes");
+//				MainActivity.setSize(height, width);
+//			} else {
+				Log.d("CameraPreview", "doSwitch : no");
+				MainActivity.setSize((int)optimalWidth, (int)optimalHeight);
+//			}
 
 			int result = (cameraOrientation - degrees + 360) % 360;
 			camera.setDisplayOrientation(result);
-			parameters.setPreviewSize(width, height);
+
+
+
+
+
+			parameters.setPreviewSize(320, 240);
+//			parameters.setPreviewSize(width, height);
+
+
+
 
 			parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
 			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-
-
 			parameters.setColorEffect(Camera.Parameters.EFFECT_MONO);
 
 
-//			parameters.setPictureSize(480, 720);
+
+
+
+			List<Size> supportedPicSizes = parameters.getSupportedPictureSizes();
+			for (Size size : supportedPicSizes) {
+				Log.d("TEST", "Photo Size: " + size.width + ", " + size.height);
+			}
+
+
+
+
+
+//			parameters.setJpegQuality(100);
+//			parameters.setPictureFormat(ImageFormat.);
+
+
+			parameters.setPictureSize(1632, 1224);
+
+
+
+			//TODO
+			// 0. Crop
+			// 1. get 4:3 closest to HD (might need to consider preview space, or do own preview based on screen width)
+			// 2. Can add code to determine how much of image is taken up by qr and deny if to big or small
+
+
+
+
+			// 1. Set height based on the SCREEN width, if height is more than SCREEN height
+			//    then set width based on SCREEN height. (4:3)
+			// 2. Get the closest 4:3 PREVIEW ratio to what was set above.
+			// 3. Set picture size as closest to 1500 4:3
+
+
+
+
+
+
+
 
 			camera.setParameters(parameters);
 			camera.startPreview();
@@ -93,6 +159,9 @@ class CameraPreviewGingerbread implements CameraPreviewProvider {
 	}
 
 	public Size getOptimalPreviewSize(List<Size> sizes, int w, int h) {
+		for (Size size : sizes) {
+			Log.d("CameraPreview", "Size: " + size.width + ", " + size.height);
+		}
 		final double ASPECT_TOLERANCE = 0.1;
 		final double MAX_DOWNSIZE = 1.5;
 

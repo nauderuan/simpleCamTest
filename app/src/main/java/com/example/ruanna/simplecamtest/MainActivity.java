@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
@@ -31,6 +32,8 @@ public class MainActivity extends Activity {
         captureButton = (CameraPreview) container.getChildAt(0);
         capture = (Button) findViewById(R.id.picture);
         capture.setOnClickListener(captrureListener);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     static public void setSize(int w, int h) {
